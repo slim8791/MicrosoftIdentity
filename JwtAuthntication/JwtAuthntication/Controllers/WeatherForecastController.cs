@@ -1,3 +1,5 @@
+using JwtAuthntication.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JwtAuthntication.Controllers
@@ -17,7 +19,7 @@ namespace JwtAuthntication.Controllers
         {
             _logger = logger;
         }
-
+        [Authorize]
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {

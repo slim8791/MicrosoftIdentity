@@ -65,11 +65,73 @@ namespace JwtAuthntication.Controllers
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:ValidIssuer"],
                 audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddDays(1),
+                expires: DateTime.Now.AddHours(3),
                 claims: claims,
                 signingCredentials: new SigningCredentials(authKey, SecurityAlgorithms.HmacSha256)
                 );
             return token;
         }
+
+        [HttpPost]
+        [Route("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel registerModel)
+        {
+            var userNameExists = await _userManager.FindByNameAsync(registerModel.UserName);
+            var userEmailExists = await _userManager.FindByEmailAsync(registerModel.Email);
+            if (userNameExists != null || userEmailExists != null)
+                return StatusCode(StatusCodes.Status406NotAcceptable, new ResponseModel { Status = "Error", Message = "User already exists" });
+
+            IdentityUser user = new IdentityUser
+            {
+                Email = registerModel.Email,
+                UserName = registerModel.UserName,
+                SecurityStamp = Guid.NewGuid().ToString()
+            };
+
+            var result = await _userManager.CreateAsync(user, registerModel.Password);
+            if (result.Succeeded)
+            {
+                if (!await _roleManager.RoleExistsAsync(UserRoles.User))
+                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+
+                await _userManager.AddToRoleAsync(user, UserRoles.User);
+                //return Ok(new ResponseModel { Status = "Success", Message = "User created" });
+                return StatusCode(StatusCodes.Status201Created, new ResponseModel { Status = "Success", Message = "User created" });
+            }
+               
+
+            return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "an error has occured" });
+        }
+
+        [HttpPost]
+        [Route("adminregister")]
+        public async Task<IActionResult> AdminRegister([FromBody] RegisterModel registerModel)
+        {
+            var userNameExists = await _userManager.FindByNameAsync(registerModel.UserName);
+            var userEmailExists = await _userManager.FindByEmailAsync(registerModel.Email);
+            if (userNameExists != null || userEmailExists != null)
+                return StatusCode(StatusCodes.Status406NotAcceptable, new ResponseModel { Status = "Error", Message = "User already exists" });
+
+            IdentityUser user = new IdentityUser
+            {
+                Email = registerModel.Email,
+                UserName = registerModel.UserName,
+                SecurityStamp = Guid.NewGuid().ToString()
+            };
+
+            var result = await _userManager.CreateAsync(user, registerModel.Password);
+            if (!result.Succeeded)
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "an error has occured" });
+
+            if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
+
+            await _userManager.AddToRoleAsync(user, UserRoles.Admin);
+            return StatusCode(StatusCodes.Status201Created, new ResponseModel { Status = "Success", Message = "User created" });
+        }
+
+
+
+
     }
 }

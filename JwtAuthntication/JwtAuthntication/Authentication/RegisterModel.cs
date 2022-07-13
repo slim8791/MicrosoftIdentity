@@ -2,7 +2,7 @@
 
 namespace JwtAuthntication.Authentication
 {
-    public class ResgisterModel
+    public class RegisterModel
     {
         [Required(ErrorMessage = "user name required")]
         public string? UserName { get; set; }
