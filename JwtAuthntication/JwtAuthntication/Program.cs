@@ -1,4 +1,5 @@
 using JwtAuthntication.Authentication;
+using JwtAuthntication.Authentication.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,6 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     }
 )
-
     .AddJwtBearer(options =>
     {
         options.SaveToken = true;
@@ -39,7 +39,20 @@ builder.Services.AddAuthentication(options =>
         };
     }
 ) ;
+///you can refer to https://code-maze.com/aspnetcore-send-email/
+/// <summary>
+/// Injection of email service 
+/// </summary>
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 
+
+/// <summary>
+/// config email
+/// </summary>
+var emailConfig = config
+        .GetSection("EmailConfiguration")
+        .Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -56,6 +69,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+/// <summary>
+/// Important to provide authentication
+/// </summary>
 app.UseAuthentication();
 app.UseAuthorization();
 
